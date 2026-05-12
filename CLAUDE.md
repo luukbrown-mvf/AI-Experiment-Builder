@@ -21,21 +21,21 @@ The team uses this to ship variants quickly without context-switching into code.
 
 ## Workflow
 
-1. User runs `/fetch <url>` — the page is fetched to `pages/<slug>/original.html` and served at http://localhost:3000 with `pages/<slug>/changes.js` injected.
-2. User describes changes in plain English. You edit **only** `pages/<slug>/changes.js`.
+1. User runs `/fetch <url>` — the page is fetched to `page/original.html` and served at http://localhost:3000 with `page/changes.js` injected. Any previous `page/` is wiped first.
+2. User describes changes in plain English. You edit **only** `page/changes.js`.
 3. The local server live-reloads on save — user verifies in their browser.
-4. When happy, they copy the contents of `pages/<slug>/changes.js` into Optimizely's Custom Code box.
+4. When happy, they copy the contents of `page/changes.js` into Optimizely's Custom Code box.
 
 `/debug` is for when something looks wrong. **Trigger the `/debug` flow yourself** (without making them type it) if they say things like "it's broken", "doesn't work", "I don't see it", "check it for me", "is it working?".
 
 ## Files
 
 **You edit:**
-- `pages/<slug>/changes.js` — the only file. Slug comes from `app/state.json`.
+- `page/changes.js` — the only file you ever edit.
 
 **You never edit:**
-- `pages/<slug>/original.html` — frozen snapshot.
-- Anything under `app/` — implementation. Read-only. (Includes `app/state.json`, managed by the scripts.)
+- `page/original.html` — frozen snapshot of the fetched page.
+- Anything under `app/` — implementation. Read-only.
 
 ## Optimizely JS Rules
 

@@ -15,7 +15,8 @@ Fetches a live webpage and sets it up for editing in the local preview at http:/
 
 ## Notes
 
-- The fetched HTML lives at `pages/<slug>/original.html` and is never edited.
-- `pages/<slug>/changes.js` is the only file you edit going forward. CSS goes inside it via `injectStyles()`.
+- The fetched HTML lives at `page/original.html` and is never edited.
+- `page/changes.js` is the only file you edit going forward. CSS goes inside it via `injectStyles()`.
 - The browser preview shows `original.html` with `changes.js` injected — exactly what Optimizely will run.
+- `/fetch` always wipes any previous `page/` before fetching the new URL.
 - See `CLAUDE.md` for the Optimizely JS rules.

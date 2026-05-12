@@ -1,25 +1,17 @@
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, rmSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import open from 'open';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const STATE_PATH = join(__dirname, 'state.json');
+const PAGE_DIR = join(ROOT, 'page');
 
 const url = process.argv[2];
 
 if (!url) {
   console.error('\nUsage: node fetch.js <url>\n');
   process.exit(1);
-}
-
-function urlToSlug(rawUrl) {
-  return rawUrl
-    .replace(/^https?:\/\//, '')
-    .replace(/[/.?=&#]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
 }
 
 console.log(`\nFetching ${url}...`);
@@ -51,13 +43,14 @@ const origin = new URL(url).origin;
 html = html.replace(/(<head[^>]*>)/i, `$1\n  <base href="${origin}/">`);
 console.log(`Injecting base tag: ${origin}`);
 
-const slug = urlToSlug(url);
-const dir = join(ROOT, 'pages', slug);
-mkdirSync(dir, { recursive: true });
+if (existsSync(PAGE_DIR)) {
+  rmSync(PAGE_DIR, { recursive: true, force: true });
+}
+mkdirSync(PAGE_DIR, { recursive: true });
 
-writeFileSync(join(dir, 'original.html'), html, 'utf8');
+writeFileSync(join(PAGE_DIR, 'original.html'), html, 'utf8');
 
-writeFileSync(join(dir, 'changes.js'), `// Optimizely Custom JS — paste this into the Custom Code box in Optimizely when done.
+writeFileSync(join(PAGE_DIR, 'changes.js'), `// Optimizely Custom JS — paste this into the Custom Code box in Optimizely when done.
 // ES2015 (ES6) syntax only. AVOID: object spread {...x}, async/await, optional chaining ?., nullish ??.
 // Optimizely runs this BEFORE DOMContentLoaded — use waitForElement for DOM changes.
 (function() {
@@ -92,19 +85,9 @@ writeFileSync(join(dir, 'changes.js'), `// Optimizely Custom JS — paste this i
 })();
 `, 'utf8');
 
-const state = {
-  url,
-  slug,
-  domain: origin,
-  status: 'fetched',
-  startedAt: new Date().toISOString()
-};
-
-writeFileSync(STATE_PATH, JSON.stringify(state, null, 2), 'utf8');
-
 const sizeKb = (html.length / 1024).toFixed(1);
-console.log(`Saved: pages/${slug}/original.html (${sizeKb} KB)`);
-console.log(`Created: pages/${slug}/changes.js`);
+console.log(`Saved: page/original.html (${sizeKb} KB)`);
+console.log(`Created: page/changes.js`);
 
 const previewUrl = `http://localhost:${process.env.PORT || 3000}`;
 try {

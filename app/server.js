@@ -8,7 +8,9 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const STATE_PATH = join(__dirname, 'state.json');
+const PAGE_DIR = join(ROOT, 'page');
+const HTML_PATH = join(PAGE_DIR, 'original.html');
+const CHANGES_PATH = join(PAGE_DIR, 'changes.js');
 const PORT = parseInt(process.env.PORT || '3000');
 
 const app = express();
@@ -27,15 +29,6 @@ function broadcast() {
     if (client.readyState === 1) {
       client.send(JSON.stringify({ type: 'reload' }));
     }
-  }
-}
-
-function getState() {
-  if (!existsSync(STATE_PATH)) return null;
-  try {
-    return JSON.parse(readFileSync(STATE_PATH, 'utf8'));
-  } catch {
-    return null;
   }
 }
 
@@ -65,22 +58,15 @@ function noCache(res) {
 }
 
 app.get('/changes.js', (req, res) => {
-  const state = getState();
   noCache(res);
-  if (!state?.slug) return res.type('js').send('');
-  const filePath = join(ROOT, 'pages', state.slug, 'changes.js');
-  if (!existsSync(filePath)) return res.type('js').send('');
-  res.type('js').send(readFileSync(filePath, 'utf8'));
+  if (!existsSync(CHANGES_PATH)) return res.type('js').send('');
+  res.type('js').send(readFileSync(CHANGES_PATH, 'utf8'));
 });
 
 app.get('/', (req, res) => {
-  const state = getState();
-  if (!state?.slug) return res.send(PLACEHOLDER);
+  if (!existsSync(HTML_PATH)) return res.send(PLACEHOLDER);
 
-  const htmlPath = join(ROOT, 'pages', state.slug, 'original.html');
-  if (!existsSync(htmlPath)) return res.send(PLACEHOLDER);
-
-  let html = readFileSync(htmlPath, 'utf8');
+  let html = readFileSync(HTML_PATH, 'utf8');
 
   const base = `http://localhost:${PORT}`;
   const injection = `  <script src="${base}/changes.js"></script>
@@ -91,13 +77,13 @@ app.get('/', (req, res) => {
   res.type('html').send(html);
 });
 
-chokidar.watch(join(ROOT, 'pages'), { ignoreInitial: true }).on('all', () => {
+chokidar.watch(PAGE_DIR, { ignoreInitial: true }).on('all', () => {
   broadcast();
 });
 
 server.listen(PORT, () => {
   console.log(`\n  Local preview: http://localhost:${PORT}`);
-  console.log(`  Watching pages/ for changes...\n`);
+  console.log(`  Watching page/ for changes...\n`);
 });
 
 server.on('error', (err) => {

@@ -1,16 +1,16 @@
 # Debug the Local Preview
 
-Inspects the running variant at http://localhost:3000 using chrome-devtools MCP, reports what's wrong, and fixes obvious issues in `pages/<slug>/changes.js`.
+Inspects the running variant at http://localhost:3000 using chrome-devtools MCP, reports what's wrong, and fixes obvious issues in `page/changes.js`.
 
 `$ARGUMENTS` is an optional description of what's broken — e.g. "banner isn't showing on mobile". May be empty.
 
 ## Steps
 
-1. **Read state.** Read `app/state.json` to get the current `slug`. If null, tell the user there's no active page (run `/fetch <url>` first) and stop.
+1. **Check active page.** If `page/original.html` doesn't exist, tell the user there's no active page (run `/fetch <url>` first) and stop.
 
-2. **Capture desktop.** `new_page` to http://localhost:3000 with `background: true` (avoids stealing focus). Then `resize_page` to 1280×800, `wait_for` network idle, `take_screenshot` (full page) saved to `pages/<slug>/debug-desktop.png`, `list_console_messages`.
+2. **Capture desktop.** `new_page` to http://localhost:3000 with `background: true` (avoids stealing focus). Then `resize_page` to 1280×800, `wait_for` network idle, `take_screenshot` (full page) saved to `page/debug-desktop.png`, `list_console_messages`.
 
-3. **Analyse.** Compare what you see against the user's intent (from `$ARGUMENTS` and the current `pages/<slug>/changes.js`). Identify:
+3. **Analyse.** Compare what you see against the user's intent (from `$ARGUMENTS` and the current `page/changes.js`). Identify:
    - places the change didn't apply
    - layout / spacing bugs caused by the change
    - console errors from `changes.js` (ignore third-party / analytics / Optimizely Edge mismatches on localhost)
@@ -20,9 +20,9 @@ Inspects the running variant at http://localhost:3000 using chrome-devtools MCP,
    - The desktop bug looks viewport-dependent (`position: fixed`, flex/grid layout, media-query-driven CSS)
    - The fix you're about to make touches viewport-dependent CSS
 
-5. **Escalate with temporary `console.log`s only if needed.** If the screenshot + console didn't reveal the cause (silent selector returning nothing, callback never firing, condition unexpectedly false), add `console.log` statements to `pages/<slug>/changes.js`, reload, read the console again. **REMOVE every log you added before finishing this step** — the final `changes.js` gets pasted into Optimizely, and production console spam is a sloppy footprint.
+5. **Escalate with temporary `console.log`s only if needed.** If the screenshot + console didn't reveal the cause (silent selector returning nothing, callback never firing, condition unexpectedly false), add `console.log` statements to `page/changes.js`, reload, read the console again. **REMOVE every log you added before finishing this step** — the final `changes.js` gets pasted into Optimizely, and production console spam is a sloppy footprint.
 
-6. **Fix what's clearly wrong** in `pages/<slug>/changes.js`. The server live-reloads on save. Stay within the JS rules in `CLAUDE.md` (ES2015 ceiling — no object spread, async/await, optional chaining, nullish coalescing).
+6. **Fix what's clearly wrong** in `page/changes.js`. The server live-reloads on save. Stay within the JS rules in `CLAUDE.md` (ES2015 ceiling — no object spread, async/await, optional chaining, nullish coalescing).
 
 7. **Close the MCP page** with `close_page` so each `/debug` runs on a clean lifecycle (open → use → close).
 

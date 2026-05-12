@@ -38,7 +38,7 @@ The browser live-reloads each time Claude saves. Keep iterating until you're hap
 
 ### 4. Copy the final JS into Optimizely
 
-Your variant lives in `pages/<slug>/changes.js` — open that file, copy everything, and paste it into Optimizely's **Custom Code** box on your variation.
+Your variant lives in `page/changes.js` — open that file, copy everything, and paste it into Optimizely's **Custom Code** box on your variation.
 
 (Or ask Claude *"show me the final JS"* and it'll print it in the chat.)
 
@@ -66,8 +66,8 @@ Wipes the current page and lets you start fresh with a new URL.
 
 | Path | What it is |
 |------|------------|
-| `pages/<slug>/changes.js` | **Your variant.** This is what you paste into Optimizely. |
-| `pages/<slug>/original.html` | Frozen copy of the fetched page. Don't edit. |
+| `page/changes.js` | **Your variant.** This is what you paste into Optimizely. |
+| `page/original.html` | Frozen copy of the fetched page. Don't edit. |
 | `app/` | Implementation files. Don't touch. |
 | `CLAUDE.md` | Instructions Claude follows when building experiments. |
 

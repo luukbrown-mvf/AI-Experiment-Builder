@@ -1,6 +1,6 @@
 # Reset to Clean Slate
 
-Deletes everything under `pages/` and resets `app/state.json` to idle. **Do not ask for confirmation** — just run it.
+Deletes the `page/` folder. **Do not ask for confirmation** — just run it.
 
 ## Steps
 
