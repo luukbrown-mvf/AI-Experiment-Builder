@@ -18,6 +18,15 @@ The user is modifying a page already fetched into `page/original.html`. Your job
 - Do not auto-QA. Never call `webapp-testing` or any `chrome-devtools` MCP tool after editing. The user QAs the preview themselves.
 - Stay within the JS rules in `CLAUDE.md` (ES2015 ceiling — no object spread, async/await, optional chaining, nullish coalescing). Use `injectStyles` for CSS and `waitForElement` for DOM ops — both helpers are pre-defined in every starter `changes.js`.
 
+## Scope discipline — only touch what was asked
+
+The aesthetic guidance below is for executing **the requested change** with high quality. It is **not** a license to redesign the surrounding page.
+
+- Modify only the element(s) the user named. If they asked for a banner, ship the banner — do not also rewrite the article headline, restyle the existing CTA, or "improve" neighbouring sections.
+- If you spot something else that looks suboptimal on the page, **leave it alone** unless the user asked. Flag it in your reply for them to decide on next time.
+- Pulling brand cues (palette, typography) from the existing page is encouraged. **Replacing** existing brand elements is not, unless explicitly requested.
+- When in doubt, prefer the smaller intervention. The user can always ask for more.
+
 ## Pull project context first (cheap, do not skip)
 
 Before committing to a direction, look at what the existing page is. Read or grep `page/original.html` for:
