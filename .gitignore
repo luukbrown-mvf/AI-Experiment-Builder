@@ -1,3 +1,5 @@
 node_modules/
 .env
 page/index.html
+.playwright-mcp
+package-lock.json

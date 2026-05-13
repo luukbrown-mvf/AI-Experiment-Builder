@@ -1,17 +1,12 @@
 {
-  "name": "optimizely-experiment-builder",
-  "version": "1.0.0",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "start": "node server.js",
-    "fetch": "node fetch.js",
-    "reset": "node reset.js"
-  },
-  "dependencies": {
-    "chokidar": "^3.6.0",
-    "express": "^4.18.0",
-    "open": "^10.2.0",
-    "ws": "^8.18.0"
-  }
+    "$schema": "https://json.schemastore.org/package.json",
+    "name": "optimizely-experiment-builder",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "browser-sync start --server ../page --files '../page/**/*' --no-notify --no-snippet"
+    },
+    "dependencies": {
+        "browser-sync": "^3.0.0"
+    }
 }
