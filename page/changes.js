@@ -16,18 +16,32 @@ const _cro = (() => {
     const waitForElement = (selector, timeout = 5000) => {
         return new Promise((resolve, reject) => {
             const el = document.querySelector(selector);
-            if (el) { resolve(el); return; }
+            if (el) {
+                resolve(el);
+                return;
+            }
             const timer = setTimeout(() => {
                 observer.disconnect();
                 reject(new Error(`Timeout: ${selector}`));
             }, timeout);
             const observer = new MutationObserver((mutations) => {
                 for (const mutation of mutations) {
-                    const found = findInAddedNodes(mutation.addedNodes, selector);
-                    if (found) { clearTimeout(timer); observer.disconnect(); resolve(found); return; }
+                    const found = findInAddedNodes(
+                        mutation.addedNodes,
+                        selector,
+                    );
+                    if (found) {
+                        clearTimeout(timer);
+                        observer.disconnect();
+                        resolve(found);
+                        return;
+                    }
                 }
             });
-            observer.observe(document.documentElement, { childList: true, subtree: true });
+            observer.observe(document.documentElement, {
+                childList: true,
+                subtree: true,
+            });
         });
     };
 
@@ -39,9 +53,7 @@ const _cro = (() => {
     const { waitForElement } = _cro;
 
     // Most code goes here — runs once the DOM is ready.
-    document.addEventListener('DOMContentLoaded', function() {
-
-    });
+    document.addEventListener("DOMContentLoaded", () => {});
 
     // Use waitForElement only for elements injected after page load by JS (e.g. React, lazy loaders).
     // waitForElement('.hero h1').then(function(el) {
