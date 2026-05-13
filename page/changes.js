@@ -47,12 +47,12 @@ const _cro = (() => {
     const { ready, waitForElement } = _cro;
 
     // Most code goes here — runs when the DOM is ready.
-    ready(function() {
+    ready(() => {
 
     });
 
     // Use waitForElement only for elements injected after page load by JS (e.g. React, lazy loaders).
-    // waitForElement('.hero h1').then(function(el) {
+    // waitForElement('.hero h1').then((el) => {
     //   el.textContent = 'New headline';
     // });
 })();
