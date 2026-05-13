@@ -24,7 +24,7 @@
             });
             const timer = setTimeout(() => {
                 observer.disconnect();
-                reject(new Error("Timeout: " + selector));
+                reject(new Error(`Timeout: ${selector}`));
             }, timeout);
         });
     };
