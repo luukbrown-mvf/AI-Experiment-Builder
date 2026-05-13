@@ -53,6 +53,12 @@ Resets `changes.css` and `changes.js` to their stubs, leaving `page/index.html` 
    (() => {
        const { waitForElement } = _cro;
 
+       // Most code goes here — runs once the DOM is ready.
+       document.addEventListener('DOMContentLoaded', function() {
+
+       });
+
+       // Use waitForElement only for elements injected after page load by JS (e.g. React, lazy loaders).
        // waitForElement('.hero h1').then(function(el) {
        //   el.textContent = 'New headline';
        // });

@@ -60,9 +60,15 @@ const _cro = (() => {
 (() => {
     const { waitForElement } = _cro;
 
-    waitForElement('.target').then(function(el) {
-        el.textContent = 'New text';
+    // Most code goes here — runs once the DOM is ready.
+    document.addEventListener('DOMContentLoaded', function() {
+        // DOM manipulation here
     });
+
+    // Use waitForElement only for elements injected after page load by JS (e.g. React, lazy loaders).
+    // waitForElement('.target').then(function(el) {
+    //   el.textContent = 'New text';
+    // });
 })();
 ```
 
