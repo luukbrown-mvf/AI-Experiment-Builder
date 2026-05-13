@@ -44,27 +44,29 @@ Optimizely runs custom JS **before DOMContentLoaded**. Its editor parses at an *
 
 ### Standard pattern
 
-```js
-(function() {
-  // Returns a Promise. Use .then() to run code after. Use Promise.all([...]) for multiple elements.
-  const waitForElement = (selector, timeout = 5000) => {
-    return new Promise(function(resolve, reject) {
-      const el = document.querySelector(selector);
-      if (el) { resolve(el); return; }
-      const timer = setTimeout(function() { observer.disconnect(); reject(new Error('Timeout: ' + selector)); }, timeout);
-      const observer = new MutationObserver(function() {
-        const el = document.querySelector(selector);
-        if (el) { clearTimeout(timer); observer.disconnect(); resolve(el); }
-      });
-      observer.observe(document.documentElement, { childList: true, subtree: true });
-    });
-  };
+`changes.js` has two sections separated by banner comments. Only edit the **Experiment** section.
 
-  waitForElement('.target').then(function(el) {
-    el.textContent = 'New text';
-  });
+**Framework section** — utilities, never touch:
+```js
+const _cro = (() => {
+    // findInAddedNodes + waitForElement defined here
+    return { waitForElement };
 })();
 ```
+`const _cro` is top-level in the script but NOT on `window` (ES6 block scoping). Do not convert to a `function` declaration — that would pollute `window`.
+
+**Experiment section** — the editing zone:
+```js
+(() => {
+    const { waitForElement } = _cro;
+
+    waitForElement('.target').then(function(el) {
+        el.textContent = 'New text';
+    });
+})();
+```
+
+Use `Promise.all([...])` to wait for multiple elements in parallel.
 
 ### Allowed (verified)
 

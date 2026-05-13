@@ -1,7 +1,10 @@
 // Optimizely Custom JS — paste this into the JS box in Optimizely when done.
 // ES2015 (ES6) syntax only. AVOID: object spread {...x}, async/await, optional chaining (?.), nullish coalescing (??).
-// Optimizely runs this BEFORE DOMContentLoaded — use waitForElement for DOM changes.
-(() => {
+// Optimizely runs this BEFORE DOMContentLoaded — use waitForElement in the experiment section below.
+
+// ── Framework (do not edit) ────────────────────────────────────────────────
+// top-level const: NOT on window. Do not convert to a function declaration.
+const _cro = (() => {
     const findInAddedNodes = (addedNodes, selector) => {
         for (const node of addedNodes) {
             if (node.nodeType !== 1) continue;
@@ -10,7 +13,6 @@
         return null;
     };
 
-    // Returns a Promise. Use .then() to run code after. Use Promise.all([...]) for multiple elements.
     const waitForElement = (selector, timeout = 5000) => {
         return new Promise((resolve, reject) => {
             const el = document.querySelector(selector);
@@ -28,6 +30,13 @@
             observer.observe(document.documentElement, { childList: true, subtree: true });
         });
     };
+
+    return { waitForElement };
+})();
+
+// ── Experiment (edit here) ─────────────────────────────────────────────────
+(() => {
+    const { waitForElement } = _cro;
 
     // waitForElement('.hero h1').then(function(el) {
     //   el.textContent = 'New headline';
