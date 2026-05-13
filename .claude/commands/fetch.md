@@ -8,26 +8,32 @@ Fetches a live webpage and saves it to `page/index.html` with assets injected. D
 
 1. **Validate input.** If `$ARGUMENTS` is empty or doesn't look like a URL, ask the user for the URL and stop.
 
-2. **Fetch the HTML.** Use the WebFetch tool to GET `$ARGUMENTS` with a browser-like User-Agent. If it fails, report the error and stop.
+2. **Fetch and process in one Bash command.** Run the following, substituting `$ARGUMENTS` for `URL`:
 
-3. **Derive the origin.** From the URL extract `scheme://host` (e.g. `https://example.com`). This becomes the `<base>` href.
-
-4. **Strip iframes.** Remove all `<iframe …>…</iframe>` blocks from the HTML (they break the preview and are irrelevant to the experiment).
-
-5. **Inject into `<head>`.** Immediately after the opening `<head>` tag insert exactly these two lines (in this order):
-
-   ```html
-   <script>(()=>{const h=`${location.protocol}//${location.host}`;const l=document.createElement('link');l.rel='stylesheet';l.href=`${h}/changes.css`;document.head.appendChild(l);const s=document.createElement('script');s.src=`${h}/changes.js`;document.head.appendChild(s);const bs=document.createElement('script');bs.src=`${h}/browser-sync/browser-sync-client.js`;document.head.appendChild(bs);})()</script>
-   <base href="ORIGIN/">
+   ```bash
+   curl -sL \
+     -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+     "URL" | node -e "
+   const fs = require('fs');
+   const url = new URL('URL');
+   const origin = url.origin;
+   let html = '';
+   process.stdin.setEncoding('utf8');
+   process.stdin.on('data', d => html += d);
+   process.stdin.on('end', () => {
+     html = html.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '');
+     const injection = '<script>(()=>{const h=\`\${location.protocol}//\${location.host}\`;const l=document.createElement(\"link\");l.rel=\"stylesheet\";l.href=\`\${h}/changes.css\`;document.head.appendChild(l);const s=document.createElement(\"script\");s.src=\`\${h}/changes.js\`;document.head.appendChild(s);const bs=document.createElement(\"script\");bs.src=\`\${h}/browser-sync/browser-sync-client.js\`;document.head.appendChild(bs);})()</script>\n<base href=\"' + origin + '/\">';
+     html = html.replace(/(<head\b[^>]*>)/i, '\$1\n' + injection);
+     fs.writeFileSync('page/index.html', html);
+   });
+   "
    ```
 
-   Replace `ORIGIN` with the value from step 3. **Why one script:** `<base>` redirects all root-relative paths (`/changes.css`) to the origin server. By building absolute URLs from `location.protocol + '//' + location.host` at runtime, all three assets (changes.css, changes.js, browser-sync client) resolve to localhost regardless of the base tag.
-
-6. **Write `page/index.html` only.** Overwrite (or create) `page/index.html` with the processed HTML from step 5.
+   If curl or node exits non-zero, report the error and stop.
 
    **CRITICAL — DO NOT touch `page/changes.js` or `page/changes.css` under any circumstances.** These are committed repo files the user writes their experiment code into. Overwriting them destroys their work. Only `page/index.html` is ever written by this command.
 
-7. **Report.** One line: "Fetched — run `/start` to preview at http://localhost:3000."
+3. **Report.** One line: "Fetched — run `/start` to preview at http://localhost:3000."
 
 ## Notes
 
