@@ -58,10 +58,10 @@ const _cro = (() => {
 **Experiment section** — the editing zone:
 ```js
 (() => {
-    const { waitForElement } = _cro;
+    const { ready, waitForElement } = _cro;
 
-    // Most code goes here — runs once the DOM is ready.
-    document.addEventListener('DOMContentLoaded', function() {
+    // Most code goes here — runs when the DOM is ready.
+    ready(function() {
         // DOM manipulation here
     });
 
@@ -72,7 +72,7 @@ const _cro = (() => {
 })();
 ```
 
-Use `Promise.all([...])` to wait for multiple elements in parallel.
+`ready()` checks `document.readyState` first — safe to call even if DOMContentLoaded has already fired. Use `Promise.all([...])` to wait for multiple async elements in parallel.
 
 ### Allowed (verified)
 
@@ -97,6 +97,14 @@ Spread / rest forms that work:
 ### Long-string gotcha
 
 Optimizely's editor mangles very long single-line string literals on paste (reports "Unterminated string constant" pointing inside the string). **Use template literals (backticks) for any string longer than ~80 chars** — they handle newlines naturally and survive paste cleanly.
+
+### Choosing ready() vs waitForElement()
+
+When writing experiment code, check `page/index.html` to determine which to use:
+
+- **Element found in `page/index.html`** → put the code inside `ready()`. The element is in the static HTML and will be present on DOMContentLoaded.
+- **Element NOT found in `page/index.html`** → use `waitForElement()`. The element is injected dynamically by JS after the page loads (React, lazy loaders, Optimizely widgets, etc.).
+- **Styling change** → `changes.css` first, not JS at all (see CSS-first rule below).
 
 ### CSS-first rule
 

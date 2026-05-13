@@ -20,6 +20,14 @@ Resets `changes.css` and `changes.js` to their stubs, leaving `page/index.html` 
    // ── Framework (do not edit) ────────────────────────────────────────────────
    // top-level const: NOT on window. Do not convert to a function declaration.
    const _cro = (() => {
+       const ready = (fn) => {
+           if (document.readyState !== 'loading') {
+               fn();
+           } else {
+               document.addEventListener('DOMContentLoaded', fn);
+           }
+       };
+
        const findInAddedNodes = (addedNodes, selector) => {
            for (const node of addedNodes) {
                if (node.nodeType !== 1) continue;
@@ -46,15 +54,15 @@ Resets `changes.css` and `changes.js` to their stubs, leaving `page/index.html` 
            });
        };
 
-       return { waitForElement };
+       return { ready, waitForElement };
    })();
 
    // ── Experiment (edit here) ─────────────────────────────────────────────────
    (() => {
-       const { waitForElement } = _cro;
+       const { ready, waitForElement } = _cro;
 
-       // Most code goes here — runs once the DOM is ready.
-       document.addEventListener('DOMContentLoaded', function() {
+       // Most code goes here — runs when the DOM is ready.
+       ready(function() {
 
        });
 
