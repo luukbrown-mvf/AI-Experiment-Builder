@@ -1,6 +1,6 @@
 # Optimizely Experiment Builder
 
-This project lets the CRO team at MVF Global build Optimizely A/B test variants by describing them in plain English. They describe the change, you write the JS and CSS, they paste each into Optimizely's separate JS and CSS boxes.
+This project lets the CRO team at MVF Global build Optimizely A/B test variants by describing them in plain English. They describe the change, you write the JS, they paste it into Optimizely's Custom Code box.
 
 ## Business context
 
@@ -21,21 +21,20 @@ The team uses this to ship variants quickly without context-switching into code.
 
 ## Workflow
 
-1. User runs `/fetch <url>` — the page is fetched to `page/index.html` (with `changes.css` and `changes.js` already injected) and served at http://localhost:3000 via Browser Sync. Only `page/index.html` is overwritten — `changes.css` and `changes.js` are untouched.
-2. User describes changes in plain English. You edit `page/changes.css` for styling and `page/changes.js` for behaviour.
+1. User runs `/fetch <url>` — the page is fetched to `page/original.html` and served at http://localhost:3000 with `page/changes.js` injected. Any previous `page/` is wiped first.
+2. User describes changes in plain English. You edit **only** `page/changes.js`.
 3. The local server live-reloads on save — user verifies in their browser.
-4. When happy, they paste `page/changes.css` into Optimizely's CSS box and `page/changes.js` into Optimizely's JS box.
+4. When happy, they copy the contents of `page/changes.js` into Optimizely's Custom Code box.
 
 `/debug` is for when something looks wrong. **Trigger the `/debug` flow yourself** (without making them type it) if they say things like "it's broken", "doesn't work", "I don't see it", "check it for me", "is it working?".
 
 ## Files
 
 **You edit:**
-- `page/changes.css` — all styling. Plain CSS, no JS injection.
-- `page/changes.js` — DOM manipulation and behaviour only. No CSS here.
+- `page/changes.js` — the only file you ever edit.
 
 **You never edit:**
-- `page/index.html` — fetched snapshot of the page, with `changes.css` and `changes.js` injected. Treat as read-only.
+- `page/original.html` — frozen snapshot of the fetched page.
 - Anything under `app/` — implementation. Read-only.
 
 ## Optimizely JS Rules
@@ -44,35 +43,32 @@ Optimizely runs custom JS **before DOMContentLoaded**. Its editor parses at an *
 
 ### Standard pattern
 
-`changes.js` has two sections separated by banner comments. Only edit the **Experiment** section.
-
-**Framework section** — utilities, never touch:
 ```js
-const _cro = (() => {
-    // findInAddedNodes + waitForElement defined here
-    return { waitForElement };
+(function() {
+  const injectStyles = (css) => {
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+  };
+
+  const waitForElement = (selector, callback, timeout = 5000) => {
+    const start = Date.now();
+    const tick = setInterval(() => {
+      const el = document.querySelector(selector);
+      if (el) { clearInterval(tick); callback(el); }
+      else if (Date.now() - start > timeout) { clearInterval(tick); }
+    }, 50);
+  };
+
+  injectStyles(`
+    .target { display: none !important; }
+  `);
+
+  waitForElement('.target', (el) => {
+    el.textContent = 'New text';
+  });
 })();
 ```
-`const _cro` is top-level in the script but NOT on `window` (ES6 block scoping). Do not convert to a `function` declaration — that would pollute `window`.
-
-**Experiment section** — the editing zone:
-```js
-(() => {
-    const { ready, waitForElement } = _cro;
-
-    // Most code goes here — runs when the DOM is ready.
-    ready(() => {
-        // DOM manipulation here
-    });
-
-    // Use waitForElement only for elements injected after page load by JS (e.g. React, lazy loaders).
-    // waitForElement('.target').then((el) => {
-    //   el.textContent = 'New text';
-    // });
-})();
-```
-
-`ready()` checks `document.readyState` first — safe to call even if DOMContentLoaded has already fired. Use `Promise.all([...])` to wait for multiple async elements in parallel.
 
 ### Allowed (verified)
 
@@ -96,19 +92,11 @@ Spread / rest forms that work:
 
 ### Long-string gotcha
 
-Optimizely's editor mangles very long single-line string literals on paste (reports "Unterminated string constant" pointing inside the string). **Use template literals (backticks) for any string longer than ~80 chars** — they handle newlines naturally and survive paste cleanly.
-
-### Choosing ready() vs waitForElement()
-
-When writing experiment code, check `page/index.html` to determine which to use:
-
-- **Element found in `page/index.html`** → put the code inside `ready()`. The element is in the static HTML and will be present on DOMContentLoaded.
-- **Element NOT found in `page/index.html`** → use `waitForElement()`. The element is injected dynamically by JS after the page loads (React, lazy loaders, Optimizely widgets, etc.).
-- **Styling change** → `changes.css` first, not JS at all (see CSS-first rule below).
+Optimizely's editor mangles very long single-line string literals on paste (reports "Unterminated string constant" pointing inside the string). **Use template literals (backticks) for any string longer than ~80 chars** — they handle newlines naturally and survive paste cleanly. CSS blocks should always be backticks.
 
 ### CSS-first rule
 
-Many sites (especially WordPress) fire deferred handlers that re-render elements after JS runs. **Write all styling in `changes.css`** (with `!important` where needed) for hides, layout, and visual changes. Reach for `waitForElement` in `changes.js` only for things CSS can't do: text changes, attribute changes, DOM insertion/removal.
+Many sites (especially WordPress) fire deferred handlers that re-render elements after JS runs. **Prefer `injectStyles`** (with `!important` where needed) for hides, layout, and styling. Reach for `waitForElement` only for things CSS can't do: text changes, attribute changes, DOM insertion/removal.
 
 ### Runtime behaviour to wire up (when inserting elements)
 
@@ -124,6 +112,6 @@ These apply to any inserted/overlay element — not just one shape. Pick whichev
 
 - Direct, terse, no filler. Lead with the answer.
 - Brief by default — expand only when asked or when the task genuinely requires it.
-- After editing `changes.css` or `changes.js`, one-line report: "Done — http://localhost:3000 will auto-reload."
+- After editing `changes.js`, one-line report: "Done — refresh http://localhost:3000 to see it."
 - Don't auto-screenshot or auto-QA after every edit. The teammate QAs the preview in their own browser.
 - Don't summarise the diff. The live preview shows the result.
