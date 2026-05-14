@@ -1,22 +1,42 @@
 # Fetch a Page
 
-Fetches a live webpage and sets it up for editing in the local preview at http://localhost:3000.
+Fetches a live webpage and saves it to `page/index.html` with assets injected. Does not touch `page/changes.js` or `page/changes.css`.
 
 `$ARGUMENTS` is the URL to fetch.
 
 ## Steps
 
 1. **Validate input.** If `$ARGUMENTS` is empty or doesn't look like a URL, ask the user for the URL and stop.
-2. **Install deps if missing.** If `app/node_modules` doesn't exist, run `npm install --prefix app` and wait for it to finish. Tell the user "first-time setup, this takes ~30 seconds."
-3. **Probe the server.** Run `curl -sS -o /dev/null -w "%{http_code}" http://localhost:3000 --max-time 2 || echo "down"`.
-4. **Start the server if not running.** If the probe didn't return `200`, run `npm start --prefix app` in the background, then poll the same probe every second (max 10s) until it returns `200`. If it never comes up, surface the failure and stop.
-5. **Fetch the page.** Run `node app/fetch.js "$ARGUMENTS"`. Wait for exit code 0.
-6. **Report.** One line: "Ready at http://localhost:3000 — tell me what you want to change."
+
+2. **Fetch and process in one Bash command.** Run the following, substituting `$ARGUMENTS` for `URL`:
+
+   ```bash
+   curl -sL \
+     -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+     "URL" | node -e "
+   const fs = require('fs');
+   const url = new URL('URL');
+   const origin = url.origin;
+   let html = '';
+   process.stdin.setEncoding('utf8');
+   process.stdin.on('data', d => html += d);
+   process.stdin.on('end', () => {
+     html = html.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '');
+     const injection = '<script>(()=>{const h=\`\${location.protocol}//\${location.host}\`;const l=document.createElement(\"link\");l.rel=\"stylesheet\";l.href=\`\${h}/changes.css\`;document.head.appendChild(l);const s=document.createElement(\"script\");s.src=\`\${h}/changes.js\`;document.head.appendChild(s);const bs=document.createElement(\"script\");bs.src=\`\${h}/browser-sync/browser-sync-client.js\`;document.head.appendChild(bs);})()</script>\n<base href=\"' + origin + '/\">';
+     html = html.replace(/(<head\b[^>]*>)/i, '\$1\n' + injection);
+     fs.writeFileSync('page/index.html', html);
+   });
+   "
+   ```
+
+   If curl or node exits non-zero, report the error and stop.
+
+   **CRITICAL — DO NOT touch `page/changes.js` or `page/changes.css` under any circumstances.** These are committed repo files the user writes their experiment code into. Overwriting them destroys their work. Only `page/index.html` is ever written by this command.
+
+3. **Report.** One line: "Fetched — run `/start` to preview at http://localhost:3000."
 
 ## Notes
 
-- The fetched HTML lives at `page/original.html` and is never edited.
-- `page/changes.js` is the only file you edit going forward. CSS goes inside it via `injectStyles()`.
-- The browser preview shows `original.html` with `changes.js` injected — exactly what Optimizely will run.
-- `/fetch` always wipes any previous `page/` before fetching the new URL.
-- See `CLAUDE.md` for the Optimizely JS rules.
+- `page/changes.js` and `page/changes.css` are committed repo files. Never overwrite, truncate, or delete them — not even to write "empty" stubs.
+- Never edit `page/index.html` after writing it.
+- See `CLAUDE.md` for the full Optimizely JS rules.
